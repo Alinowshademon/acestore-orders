@@ -1,21 +1,28 @@
+import fetch from "node-fetch";
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ message: "Method Not Allowed" });
+    return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  const order = req.body;
+  const body = req.body;
 
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const REPO = "YOUR_USERNAME/YOUR_REPO"; // e.g., alinowshad/acestore-orders
+  const GITHUB_TOKEN = process.env.GITHUB_TOKEN; // Add this in Vercel Dashboard
+  const REPO = "alinowshad/acestore-orders";        // e.g., alinowshad/acestore-orders
 
-  const title = `🛍️ New Order - ${order.customerName || "Guest"} (${order.total}৳)`;
+  if (!GITHUB_TOKEN) {
+    return res.status(500).json({ error: "GitHub token not set" });
+  }
+
+  const title = `🛍️ New Order - ${body.customerName || "Guest"} (${body.total}৳)`;
+
   const issueBody = `
-**Order Details:** ${order.orderDetails}
-**Total:** ৳${order.total}
-**Customer:** ${order.customerName}
-**Contact:** ${order.customerContact}
-**Form:** ${order.prefillFormUrl}
-**Timestamp:** ${order.timestamp}
+**Order Details:** ${body.orderDetails}
+**Total:** ৳${body.total}
+**Customer:** ${body.customerName || "Guest"}
+**Contact:** ${body.customerContact || "N/A"}
+**Form URL:** ${body.prefillFormUrl}
+**Timestamp:** ${body.timestamp}
 `;
 
   try {
@@ -33,7 +40,7 @@ export default async function handler(req, res) {
       return res.status(response.status).json({ error: text });
     }
 
-    res.status(200).json({ message: "Order issue created!" });
+    res.status(200).json({ message: "✅ Order issue created!" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
